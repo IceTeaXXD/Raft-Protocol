@@ -4,9 +4,33 @@ import (
     "fmt"
     "io"
     "net/http"
+    "os"
+
+    "github.com/joho/godotenv"
 )
 
-func makeRequest(url string) (string, error) {
+func init() {
+    // Load environment variables from .env file
+    err := godotenv.Load()
+    if err != nil {
+        fmt.Println("Error loading .env file")
+    }
+}
+
+func getServerURL() string {
+    host := os.Getenv("SERVER_HOST")
+    if host == "" {
+        host = "localhost"
+    }
+    port := os.Getenv("SERVER_PORT")
+    if port == "" {
+        port = "8080"
+    }
+    return fmt.Sprintf("http://%s:%s", host, port)
+}
+
+func makeRequest(endpoint string) (string, error) {
+    url := getServerURL() + endpoint
     response, err := http.Get(url)
     if err != nil {
         return "", err
@@ -21,30 +45,30 @@ func makeRequest(url string) (string, error) {
 }
 
 func Ping() (string, error) {
-    return makeRequest("http://localhost:8080/ping")
+    return makeRequest("/ping")
 }
 
 func Get(key string) (string, error) {
-    url := fmt.Sprintf("http://localhost:8080/get?key=%s", key)
+    url := fmt.Sprintf("/get?key=%s", key)
     return makeRequest(url)
 }
 
 func Set(key, value string) (string, error) {
-    url := fmt.Sprintf("http://localhost:8080/set?key=%s&value=%s", key, value)
+    url := fmt.Sprintf("/set?key=%s&value=%s", key, value)
     return makeRequest(url)
 }
 
 func Strln(key string) (string, error) {
-    url := fmt.Sprintf("http://localhost:8080/strln?key=%s", key)
+    url := fmt.Sprintf("/strln?key=%s", key)
     return makeRequest(url)
 }
 
 func Del(key string) (string, error) {
-    url := fmt.Sprintf("http://localhost:8080/del?key=%s", key)
+    url := fmt.Sprintf("/del?key=%s", key)
     return makeRequest(url)
 }
 
 func Append(key, value string) (string, error) {
-    url := fmt.Sprintf("http://localhost:8080/append?key=%s&value=%s", key, value)
+    url := fmt.Sprintf("/append?key=%s&value=%s", key, value)
     return makeRequest(url)
 }
