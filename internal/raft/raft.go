@@ -28,6 +28,14 @@ type VoteResponse struct {
     VoteGranted bool
 }
 
+type Heartbeat struct {
+    Term int
+}
+
+type HeartbeatResponse struct {
+    Term int
+}
+
 type Raft struct {
     members        []string
     leader         string
@@ -92,12 +100,20 @@ func (r *Raft) Heartbeat() {
 
 func (r *Raft) sendHeartbeat(member string) {
     log.Printf("Node %s sending heartbeat to %s", r.self, member)
-    resp, err := http.Get("http://" + member + "/ping")
-    if err != nil || resp.StatusCode != http.StatusOK {
-        log.Printf("Failed to ping %s: %v", member, err)
+    heartbeat := Heartbeat{
+        Term: r.term,
+    }
+    data, err := json.Marshal(heartbeat)
+    if err != nil {
+        log.Printf("Failed to marshal heartbeat: %v", err)
         return
     }
-    r.resetElectionTimeout()
+
+    resp, err := http.Post("http://"+member+"/heartbeat", "application/json", bytes.NewBuffer(data))
+    if err != nil || resp.StatusCode != http.StatusOK {
+        log.Printf("Failed to send heartbeat to %s: %v", member, err)
+        return
+    }
 }
 
 func (r *Raft) startElection() {
@@ -207,6 +223,33 @@ func HandleVoteRequest(w http.ResponseWriter, req *http.Request) {
     }
 
     if err := json.NewEncoder(w).Encode(voteResponse); err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+        return
+    }
+}
+
+func HandleHeartbeat(w http.ResponseWriter, req *http.Request) {
+    var heartbeat Heartbeat
+    if err := json.NewDecoder(req.Body).Decode(&heartbeat); err != nil {
+        http.Error(w, err.Error(), http.StatusBadRequest)
+        return
+    }
+
+    log.Printf("Node %s received heartbeat from %s", raft.self, req.RemoteAddr)
+
+    raft.mu.Lock()
+    defer raft.mu.Unlock()
+
+    // Kalau dapet heartbeat dari leader, reset election timeout
+    if raft.role != Leader {
+        raft.resetElectionTimeout()
+    }
+
+    heartbeatResponse := HeartbeatResponse{
+        Term: raft.term,
+    }
+
+    if err := json.NewEncoder(w).Encode(heartbeatResponse); err != nil {
         http.Error(w, err.Error(), http.StatusInternalServerError)
         return
     }

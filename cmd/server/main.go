@@ -24,6 +24,7 @@ func main() {
 
     // Ini buat Raft
     http.HandleFunc("/vote", raft.HandleVoteRequest)
+    http.HandleFunc("/heartbeat", raft.HandleHeartbeat)
 
     
     // Get port from environment variable
