@@ -1,41 +1,34 @@
 package main
 
 import (
-    "if3230-tubes2-spg/internal/handlers"
-    "if3230-tubes2-spg/internal/raft"
-    "log"
-    "net/http"
-    "os"
-    
-    "github.com/joho/godotenv"
+	"flag"
+	"if3230-tubes2-spg/internal/handlers"
+	"if3230-tubes2-spg/internal/raft"
+	"log"
+	"net/http"
 )
 
 func main() {
-    // Load environment variables from .env file
-    _ = godotenv.Load()
+	// Parse flags
+	var port string
+	flag.StringVar(&port, "port", "8080", "Port to run the server on")
+	flag.Parse()
 
-    // Set up HTTP server
-    http.HandleFunc("/ping", handlers.PingHandler)
-    http.HandleFunc("/get", handlers.GetHandler)
-    http.HandleFunc("/set", handlers.SetHandler)
-    http.HandleFunc("/strln", handlers.StrlnHandler)
-    http.HandleFunc("/del", handlers.DelHandler)
-    http.HandleFunc("/append", handlers.AppendHandler)
+	// Set up HTTP server
+	http.HandleFunc("/ping", handlers.PingHandler)
+	http.HandleFunc("/get", handlers.GetHandler)
+	http.HandleFunc("/set", handlers.SetHandler)
+	http.HandleFunc("/strln", handlers.StrlnHandler)
+	http.HandleFunc("/del", handlers.DelHandler)
+	http.HandleFunc("/append", handlers.AppendHandler)
 
-    // Ini buat Raft
-    http.HandleFunc("/vote", raft.HandleVoteRequest)
-    http.HandleFunc("/heartbeat", raft.HandleHeartbeat)
+	// Ini buat Raft
+	http.HandleFunc("/vote", raft.HandleVoteRequest)
+	http.HandleFunc("/heartbeat", raft.HandleHeartbeat)
 
-    
-    // Get port from environment variable
-    port := os.Getenv("PORT")
-    if port == "" {
-        port = "8080" // Default port if not set
-    }
+	// Start Raft consensus
+	go raft.StartRaft(port)
 
-    // Start Raft consensus
-    go raft.StartRaft(port)
-    
-    log.Println("Starting server on port", port)
-    log.Fatal(http.ListenAndServe(":"+port, nil))
+	log.Println("Starting server on port", port)
+	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
