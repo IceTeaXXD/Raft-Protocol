@@ -1,59 +1,71 @@
 package raft
 
 import (
-    "fmt"
     "log"
-    "net/http"
+    "math/rand"
     "sync"
     "time"
 )
 
+type NodeRole int
+
+const (
+    Follower NodeRole = iota
+    Candidate
+    Leader
+)
+
 type Raft struct {
-    members []string
-    leader  string
-    log     []string
-    mu      sync.Mutex
+    members         []string
+    leader          string
+    self            string
+    log             []string
+    mu              sync.Mutex
+    role            NodeRole
+    term            int
+    votedFor        string
+    votes           int
+    electionTimeout *time.Timer
 }
 
 var raft = Raft{
-    members: []string{"localhost:8080"},
-    leader:  "localhost:8080",
-    log:     []string{},
+    members:  []string{"localhost:8080", "localhost:8081", "localhost:8082"},
+    leader:   "",
+    log:      []string{},
+    role:     Follower,
+    term:     0,
+    votedFor: "",
 }
 
-func StartRaft() {
+func StartRaft(port string) {
+    raft.self = "localhost:" + port
+    raft.resetElectionTimeout()
     go raft.Heartbeat()
 }
 
-func (r *Raft) AppendLog(entry string) {
-    r.mu.Lock()
-    defer r.mu.Unlock()
-    r.log = append(r.log, entry)
-    fmt.Println("Log appended:", entry)
-}
-
-func (r *Raft) Heartbeat() {
-    for {
+func (r *Raft) resetElectionTimeout() {
+    if r.electionTimeout != nil {
+        r.electionTimeout.Stop()
+    }
+    r.electionTimeout = time.AfterFunc(time.Duration(5+rand.Intn(5))*time.Second, func() {
         r.mu.Lock()
-        for _, member := range r.members {
-            if member != r.leader {
-                go r.ping(member)
-            }
+        if r.role != Leader {
+            r.role = Candidate
+            r.term++
+            r.votes = 1
+            log.Printf("Node (SELF) %s became Candidate in term %d", raft.self, r.term)
+            r.mu.Unlock()
+            r.startElection()
+        } else {
+            r.mu.Unlock()
         }
-        r.mu.Unlock()
-        time.Sleep(5 * time.Second)
-    }
+    })
 }
 
-func (r *Raft) ping(member string) {
-    resp, err := http.Get("http://" + member + "/ping")
-    if err != nil {
-        log.Printf("Failed to ping %s: %v", member, err)
-        return
-    }
-    if resp.StatusCode == http.StatusOK {
-        fmt.Println(member, "is alive")
-    }
+func ResetElectionTimeout() {
+    raft.resetElectionTimeout()
 }
 
-// Implementasi untuk LeaderElection dan MembershipChange :v
+func GetSelf() string {
+    return raft.self
+}
