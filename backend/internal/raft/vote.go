@@ -103,6 +103,8 @@ func HandleHeartbeat(w http.ResponseWriter, req *http.Request) {
     }
 
     log.Printf("Node %s received heartbeat from %s", raft.self, req.RemoteAddr)
+    // TODO: leader tuh harusnya di set sesuai heartbeat dapet dari mana 
+    // raft.leader = req.TODO
 
     raft.mu.Lock()
     defer raft.mu.Unlock()
