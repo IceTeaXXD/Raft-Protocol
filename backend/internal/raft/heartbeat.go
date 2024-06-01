@@ -10,10 +10,12 @@ import (
 
 type Heartbeat struct {
     Term int
+    Sender string
 }
 
 type HeartbeatResponse struct {
     Term int
+    Sender string
 }
 
 func (r *Raft) Heartbeat() {
@@ -35,6 +37,7 @@ func (r *Raft) sendHeartbeat(member string) {
     log.Printf("Node %s sending heartbeat to %s", r.self, member)
     heartbeat := Heartbeat{
         Term: r.term,
+        Sender: r.self,
     }
     data, err := json.Marshal(heartbeat)
     if err != nil {

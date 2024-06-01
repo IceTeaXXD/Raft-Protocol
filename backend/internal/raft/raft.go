@@ -17,6 +17,7 @@ const (
 
 type Raft struct {
     members         []string
+    follower        []string
     leader          string
     self            string
     log             []string
@@ -29,12 +30,24 @@ type Raft struct {
 }
 
 var raft = Raft{
-    members:  []string{"localhost:8080", "localhost:8081", "localhost:8082"},
+    members:  []string{"localhost:8080", "localhost:8081", "localhost:8082", "localhost:8083", "localhost:8084", "localhost:8085"},
     leader:   "",
     log:      []string{},
     role:     Follower,
     term:     0,
     votedFor: "",
+}
+
+func GetRaftIsLeader() bool {
+    return raft.role == Leader
+}
+
+func GetLeader() string {
+    return raft.leader
+}
+
+func (r *Raft) isLeader() bool {
+    return r.role == Leader
 }
 
 func StartRaft(port string) {

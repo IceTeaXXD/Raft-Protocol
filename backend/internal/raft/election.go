@@ -17,6 +17,7 @@ func (r *Raft) startElection() {
                 if r.requestVote(member) {
                     r.mu.Lock()
                     r.votes++
+                    r.follower = append(r.follower, member)
                     log.Printf("Node %s received vote from %s", r.self, member)
                     r.mu.Unlock()
                 }

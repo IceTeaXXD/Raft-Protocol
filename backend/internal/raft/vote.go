@@ -102,7 +102,9 @@ func HandleHeartbeat(w http.ResponseWriter, req *http.Request) {
         return
     }
 
-    log.Printf("Node %s received heartbeat from %s", raft.self, req.RemoteAddr)
+    log.Printf("Node %s received heartbeat from %s", raft.self, heartbeat.Sender)
+
+    raft.leader = heartbeat.Sender
 
     raft.mu.Lock()
     defer raft.mu.Unlock()
@@ -114,6 +116,7 @@ func HandleHeartbeat(w http.ResponseWriter, req *http.Request) {
 
     heartbeatResponse := HeartbeatResponse{
         Term: raft.term,
+        Sender: raft.self,
     }
 
     if err := json.NewEncoder(w).Encode(heartbeatResponse); err != nil {
