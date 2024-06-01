@@ -34,7 +34,7 @@ function TerminalPage() {
                     <div className="relative flex flex-col items-center">
                     </div>
                     <div className="w-full flex-1 bg-white pt-2 overflow-y-scroll scrollbar">
-                        <h1 className="hidden md:block pl-2 my-2 font-profontiixnerdfont text-black text-sm">
+                        <h1 className="hidden md:block pl-2 my-2 font-terminal text-black">
                             Test
                         </h1>
                         <div>
@@ -42,7 +42,7 @@ function TerminalPage() {
                                 <div key={index}>
                                     <PromptInput prompt={prompt.input} handleInput={handleInput} index={index} processInput={processInput} inputRefs={inputRefs} />
                                     {prompt.output && (
-                                        <div className="pl-2 text-black font-profontiixnerdfont w-full break-words">
+                                        <div className="pl-2 text-black font-terminal w-full break-words">
                                             Processed command: {prompt.output}
                                         </div>
                                     )}

@@ -18,6 +18,9 @@ const config = {
       },
     },
     extend: {
+      fontFamily: {
+        'terminal' : ['ProFontIIxNerdFontRegular']
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
