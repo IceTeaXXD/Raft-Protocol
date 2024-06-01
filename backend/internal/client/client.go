@@ -2,89 +2,61 @@ package client
 
 import (
 	"fmt"
-	"github.com/joho/godotenv"
 	"io"
 	"net/http"
-	"os"
-	"strings"
 )
 
-func init() {
-	// Load environment variables from .env file
-	err := godotenv.Load()
-	if err != nil {
-		fmt.Println("Error loading .env file")
-	}
+type Client struct {
+	Port string
 }
 
-func getServerURL() string {
-	host := os.Getenv("SERVER_HOST")
-	if host == "" {
-		host = "localhost"
-	}
-	port := os.Getenv("SERVER_PORT")
-	if port == "" {
-		port = "8080"
-	}
-	return fmt.Sprintf("http://%s:%s", host, port)
-}
-
-func makeRequest(endpoint string) (string, error) {
-	url := getServerURL() + endpoint
-	response, err := http.Get(url)
-
+func (c *Client) makeRequest(method, endpoint string, body io.Reader) (string, error) {
+	url := "http://localhost:" + c.Port + endpoint
+	request, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return "", err
 	}
 
+	client := &http.Client{}
+	response, err := client.Do(request)
+	if err != nil {
+		return "", err
+	}
 	defer response.Body.Close()
 
-	body, err := io.ReadAll(response.Body)
-	if response.StatusCode != http.StatusOK {
-		leaderPort := strings.TrimSpace(string(body)[len("leader:localhost:"):])
-		url = fmt.Sprintf("http://localhost:%s%s", leaderPort, endpoint)
-		response, err := http.Get(url)
-		if err != nil {
-			return "", err
-		}
-		body, err = io.ReadAll(response.Body)
-		if err != nil {
-			return "", err
-		}
-
-		defer response.Body.Close()
-	}
+	bodyBytes, err := io.ReadAll(response.Body)
 	if err != nil {
 		return "", err
 	}
-	return string(body), nil
+
+	return string(bodyBytes), nil
 }
 
-func Ping() (string, error) {
-	return makeRequest("/ping")
+func (c *Client) Ping() (string, error) {
+	return c.makeRequest(http.MethodGet, "/ping", nil)
 }
 
-func Get(key string) (string, error) {
+func (c *Client) Get(key string) (string, error) {
 	url := fmt.Sprintf("/get?key=%s", key)
-	return makeRequest(url)
+	return c.makeRequest(http.MethodGet, url, nil)
 }
 
-func Set(key, value string) (string, error) {
+func (c *Client) Set(key, value string) (string, error) {
 	url := fmt.Sprintf("/set?key=%s&value=%s", key, value)
-	return makeRequest(url)
+	return c.makeRequest(http.MethodPut, url, nil)
 }
 
-func Strln(key string) (string, error) {
+func (c *Client) Strln(key string) (string, error) {
 	url := fmt.Sprintf("/strln?key=%s", key)
-	return makeRequest(url)
+	return c.makeRequest(http.MethodGet, url, nil)
 }
 
-func Del(key string) (string, error) {
+func (c *Client) Del(key string) (string, error) {
 	url := fmt.Sprintf("/del?key=%s", key)
-	return makeRequest(url)
+	return c.makeRequest(http.MethodDelete, url, nil)
 }
 
-func Append(key, value string) (string, error) {
+func (c *Client) Append(key, value string) (string, error) {
 	url := fmt.Sprintf("/append?key=%s&value=%s", key, value)
-	return makeRequest(url)
+	return c.makeRequest(http.MethodPut, url, nil)
 }

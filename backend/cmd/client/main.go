@@ -1,72 +1,93 @@
 package main
 
 import (
-    "if3230-tubes2-spg/internal/client"
-    "fmt"
+	"bufio"
+	"flag"
+	"fmt"
+	"if3230-tubes2-spg/internal/client"
+	"os"
+	"strings"
 )
 
 func main() {
-    // Ping server
-    res, err := client.Ping()
-    if err != nil {
-        fmt.Println("Error:", err)
-        return
-    }
-    fmt.Println("Ping response:", res)
+	// Parse the port from the command line arguments
+	var port string
+	flag.StringVar(&port, "port", "8080", "Port to run the client on")
+	flag.Parse()
 
-    // Set a key-value pair
-    res, err = client.Set("theKey", "Wildan")
-    if err != nil {
-        fmt.Println("Error:", err)
-        return
-    }
-    fmt.Println("Set response:", res)
+	// Create a new client instance with the specified port
+	c := &client.Client{Port: port}
 
-    // Get the value of a key
-    res, err = client.Get("theKey")
-    if err != nil {
-        fmt.Println("Error:", err)
-        return
-    }
-    fmt.Println("Get response:", res)
+	// Create a scanner to read user input
+	scanner := bufio.NewScanner(os.Stdin)
+	fmt.Println("Client started. Enter commands:")
 
-    // Get the length of the value of a key
-    res, err = client.Strln("theKey")
-    if err != nil {
-        fmt.Println("Error:", err)
-        return
-    }
-    fmt.Println("Strln response:", res)
+	for {
+		fmt.Print("> ")
+		if !scanner.Scan() {
+			break
+		}
+		line := scanner.Text()
+		parts := strings.Fields(line)
+		if len(parts) == 0 {
+			continue
+		}
 
-    // Append to the value of a key
-    res, err = client.Append("theKey", "_Ghaly")
-    if err != nil {
-        fmt.Println("Error:", err)
-        return
-    }
-    fmt.Println("Append response:", res)
+		cmd := parts[0]
+		args := parts[1:]
 
-    // Get the new value of a key
-    res, err = client.Get("theKey")
-    if err != nil {
-        fmt.Println("Error:", err)
-        return
-    }
-    fmt.Println("Get response:", res)
+		var res string
+		var err error
 
-    // Delete a key
-    res, err = client.Del("theKey")
-    if err != nil {
-        fmt.Println("Error:", err)
-        return
-    }
-    fmt.Println("Del response:", res)
+		switch cmd {
+		case "set":
+			if len(args) != 2 {
+				fmt.Println("Usage: set <key> <value>")
+				continue
+			}
+			res, err = c.Set(args[0], args[1])
+		case "append":
+			if len(args) != 2 {
+				fmt.Println("Usage: append <key> <value>")
+				continue
+			}
+			res, err = c.Append(args[0], args[1])
+		case "get":
+			if len(args) != 1 {
+				fmt.Println("Usage: get <key>")
+				continue
+			}
+			res, err = c.Get(args[0])
+		case "strln":
+			if len(args) != 1 {
+				fmt.Println("Usage: strln <key>")
+				continue
+			}
+			res, err = c.Strln(args[0])
+		case "del":
+			if len(args) != 1 {
+				fmt.Println("Usage: del <key>")
+				continue
+			}
+			res, err = c.Del(args[0])
+		case "ping":
+			res, err = c.Ping()
+		case "exit":
+			fmt.Println("Exiting client.")
+			return
+		default:
+			fmt.Println("Unknown command:", cmd)
+			continue
+		}
 
-    // Get the value of a key after deletion
-    res, err = client.Get("theKey")
-    if err != nil {
-        fmt.Println("Error:", err)
-        return
-    }
-    fmt.Println("Get response:", res)
+		if err != nil {
+			fmt.Println("Error:", err)
+		} else {
+			fmt.Println(res)
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		fmt.Println("Error reading input:", err)
+	}
 }

@@ -5,6 +5,7 @@ import (
 	"if3230-tubes2-spg/internal/store"
 	"io"
 	"net/http"
+	"fmt"
 )
 
 func PingHandler(w http.ResponseWriter, r *http.Request) {
@@ -112,9 +113,9 @@ func StrlnHandler(w http.ResponseWriter, r *http.Request) {
 		key := r.URL.Query().Get("key")
 		value := store.Get(key)
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"response" : ` + value + `}`))
+		w.Write([]byte(`{"response": ` + fmt.Sprint(len(value)) + `}`))
 	} else if r.Method == http.MethodGet {
-		resp, err := http.Get("http:/" + rft.GetLeader() + "/strlen" + "?key=" + r.URL.Query().Get("key"))
+		resp, err := http.Get("http://" + rft.GetLeader() + "/strln" + "?key=" + r.URL.Query().Get("key"))
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(err.Error()))
