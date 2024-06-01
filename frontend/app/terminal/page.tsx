@@ -33,17 +33,18 @@ function TerminalPage() {
                 <div className="w-[96%] h-[90%] md:w-[700px] md:h-[500px] lg:w-[800px] lg:h-[600px] flex flex-col border-8 border-black rounded-lg bg-black">
                     <div className="relative flex flex-col items-center">
                     </div>
-                    <div className="w-full flex-1 bg-white pt-2 overflow-y-scroll scrollbar">
-                        <h1 className="hidden md:block pl-2 my-2 font-terminal text-black">
-                            Test
+                    <div className="w-full flex-1 bg-black pt-2 overflow-y-scroll scrollbar">
+                        <h1 className="hidden md:block pl-2 my-2 font-terminal text-sky">
+                            SPG
                         </h1>
                         <div>
                             {prompts.map((prompt, index) => (
                                 <div key={index}>
                                     <PromptInput prompt={prompt.input} handleInput={handleInput} index={index} processInput={processInput} inputRefs={inputRefs} />
                                     {prompt.output && (
-                                        <div className="pl-2 text-black font-terminal w-full break-words">
+                                        <div className="relative pl-2 text-customColor font-terminal w-full overflow-hidden whitespace-nowrap border-r-2 border-customColor animate-typing">
                                             Processed command: {prompt.output}
+                                            <span className="absolute right-0 animate-blink">|</span>
                                         </div>
                                     )}
                                 </div>
