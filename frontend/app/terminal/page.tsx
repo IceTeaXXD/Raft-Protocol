@@ -42,9 +42,8 @@ function TerminalPage() {
                                 <div key={index}>
                                     <PromptInput prompt={prompt.input} handleInput={handleInput} index={index} processInput={processInput} inputRefs={inputRefs} />
                                     {prompt.output && (
-                                        <div className="relative pl-2 text-customColor font-terminal w-full overflow-hidden whitespace-nowrap border-r-2 border-customColor animate-typing">
+                                        <div className="pl-2 text-sky font-terminal w-full break-words">
                                             Processed command: {prompt.output}
-                                            <span className="absolute right-0 animate-blink">|</span>
                                         </div>
                                     )}
                                 </div>
