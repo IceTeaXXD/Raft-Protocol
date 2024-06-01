@@ -97,6 +97,10 @@ func GetSelf() string {
     return raft.self
 }
 
+func GetMembers() []string {
+    return raft.members
+}
+
 func SetMember(member []string) {
     raft.members = member
 }
