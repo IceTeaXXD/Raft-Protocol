@@ -19,11 +19,11 @@ func main() {
 	var portLead string
 
 	flag.StringVar(&port, "port", "8080", "Port to run the server on")
-	flag.StringVar(&lead, "lead", "0.0.0.0", "Port to be the leader of this server")
+	flag.StringVar(&lead, "lead", "", "Port to be the leader of this server")
 	flag.StringVar(&portLead, "portLead", "8080", "Lead port")
 	flag.Parse()
 
-	if (port != "8080"){
+	if (lead != ""){
 		var subscribeReq = raft.SubscribeReq{
 			IPAddress: lead + ":" + port,
 		}
