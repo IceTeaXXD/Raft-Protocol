@@ -1,11 +1,11 @@
 package handlers
 
 import (
+	"fmt"
 	rft "if3230-tubes2-spg/internal/raft"
 	"if3230-tubes2-spg/internal/store"
 	"io"
 	"net/http"
-	"fmt"
 )
 
 func PingHandler(w http.ResponseWriter, r *http.Request) {
@@ -146,7 +146,18 @@ func DelHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"response" : ` + value + `}`))
 	} else if r.Method == http.MethodDelete {
-		resp, err := http.Get("http:/" + rft.GetLeader() + "/del" + "?key=" + r.URL.Query().Get("key"))
+		url := "http://" + rft.GetLeader() + "/del?key=" + r.URL.Query().Get("key")
+
+		client := &http.Client{}
+
+		req, err := http.NewRequest(http.MethodDelete, url, nil)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		resp, err := client.Do(req)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(err.Error()))
@@ -178,12 +189,20 @@ func AppendHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"response" : "success"}`))
 	} else if r.Method == http.MethodPut {
-		resp, err := http.NewRequest(http.MethodPut, "http://"+rft.GetLeader()+"/append"+"?key="+r.URL.Query().Get("key")+"&value="+r.URL.Query().Get("value"), nil)
+		url := "http://" + rft.GetLeader() + "/append?key=" + r.URL.Query().Get("key") + "&value=" + r.URL.Query().Get("value")
+		client := &http.Client{}
+		req, err := http.NewRequest(http.MethodPut, url, nil)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(err.Error()))
 			return
 		}
+		resp, err := client.Do(req)
+		if err != nil {
+            w.WriteHeader(http.StatusInternalServerError)
+            w.Write([]byte("Failed to execute request: " + err.Error()))
+            return
+        }
 		defer resp.Body.Close()
 
 		body, err := io.ReadAll(resp.Body)
