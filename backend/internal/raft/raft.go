@@ -44,7 +44,7 @@ type Response struct {
 }
 
 var raft = Raft{
-    members:  []string{"localhost:8080"},
+    members:  []string{},
     leader:   "",
     log:      []string{},
     role:     Follower,
