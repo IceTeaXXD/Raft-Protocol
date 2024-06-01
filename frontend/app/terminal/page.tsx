@@ -26,16 +26,17 @@ function TerminalPage() {
             inputRefs.current[inputRefs.current.length - 1].focus();
         }
     }, [prompts]);
+    
     return (
         <div>
             <Navbar />
-            <main className="flex min-h-screen flex-col items-center justify-between p-24">
+            <main className="flex flex-col items-center justify-between p-24">
                 <div className="w-[96%] h-[90%] md:w-[700px] md:h-[500px] lg:w-[800px] lg:h-[600px] flex flex-col border-8 border-black rounded-lg bg-black">
                     <div className="relative flex flex-col items-center">
                     </div>
-                    <div className="w-full flex-1 bg-black pt-2 overflow-y-scroll scrollbar">
-                        <h1 className="hidden md:block pl-2 my-2 font-terminal text-sky">
-                            SPG
+                    <div className="w-full flex-1 bg-black pt-1 overflow-y-scroll scrollbar">
+                        <h1 className="hidden md:block pr-2 font-terminal text-sky text-right">
+                            x
                         </h1>
                         <div>
                             {prompts.map((prompt, index) => (

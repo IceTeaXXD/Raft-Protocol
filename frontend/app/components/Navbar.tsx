@@ -5,13 +5,13 @@ function Navbar() {
     <nav className="bg-black p-4">
     <ul className="flex space-x-4">
       <li>
-        <a href="/" className="text-white font-bold hover:text-gray-400">SPG</a>
+        <a href="/" className="text-sky font-terminal font-bold hover:text-gray-400">SPG</a>
       </li>
       <li>
-        <a href="/dashboard" className="text-white hover:text-gray-400">Dashboard</a>   
+        <a href="/dashboard" className="text-sky font-terminal hover:text-gray-400">Dashboard</a>   
       </li>
       <li>
-        <a href="/terminal" className="text-white hover:text-gray-400">Terminal</a>
+        <a href="/terminal" className="text-sky font-terminal hover:text-gray-400">Terminal</a>
       </li>
     </ul>
   </nav>
