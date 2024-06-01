@@ -1,10 +1,14 @@
 package raft
 
 import (
-    "log"
-    "math/rand"
-    "sync"
-    "time"
+	"encoding/json"
+	"fmt"
+	"io"
+	"log"
+	"math/rand"
+	"net/http"
+	"sync"
+	"time"
 )
 
 type NodeRole int
@@ -29,8 +33,18 @@ type Raft struct {
     electionTimeout *time.Timer
 }
 
+type SubscribeReq struct {
+    IPAddress       string `json:"IPAddress"`
+}
+
+type Response struct {
+    Status          string      `json:"status"`
+    Message         string      `json:"message"`
+    RaftMember      []string    `json:"raftMember"`
+}
+
 var raft = Raft{
-    members:  []string{"localhost:8081", "localhost:8082", "localhost:8083"},
+    members:  []string{"localhost:8080"},
     leader:   "",
     log:      []string{},
     role:     Follower,
@@ -81,4 +95,59 @@ func ResetElectionTimeout() {
 
 func GetSelf() string {
     return raft.self
+}
+
+func SetMember(member []string) {
+    raft.members = member
+}
+
+func Berlangganan(w http.ResponseWriter, r *http.Request) {
+    if (raft.role != Leader && r.Method == http.MethodPost){
+        if (raft.leader == ""){
+            return
+        }
+        var requestURL = "http://" + raft.leader + "/subscribe"
+        fmt.Print(requestURL);
+        resp, err := http.Post( requestURL, 
+                                "application/json",
+                                r.Body)
+        if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+        defer resp.Body.Close()
+
+        body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		w.WriteHeader(resp.StatusCode)
+		w.Write(body)
+        
+    } else if (r.Method == http.MethodPost) {
+        var subscribeReq SubscribeReq
+
+        if err := json.NewDecoder(r.Body).Decode(&subscribeReq); err != nil {
+            http.Error(w, err.Error(), http.StatusBadRequest)
+            return
+        }
+
+        raft.members = append(raft.members, subscribeReq.IPAddress)
+
+        var response = Response{
+            Status: "success",
+            Message: "Subscribed",
+            RaftMember: raft.members,
+        }
+
+        w.Header().Set("Content-Type", "application/json")
+        if err := json.NewEncoder(w).Encode(response); err != nil {
+            http.Error(w, err.Error(), http.StatusInternalServerError)
+            return
+        }
+    }
 }
