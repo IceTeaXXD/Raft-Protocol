@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 func PingHandler(w http.ResponseWriter, r *http.Request) {
@@ -89,13 +90,14 @@ func SetHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if rft.GetRaftIsLeader() {
+		term := rft.GetTerm()
 		// Send request to all members
 		members := rft.GetMembers()
 		for _, m := range members {
 			if m == rft.GetLeader() {
 				continue
 			}
-			req, err := http.NewRequest(http.MethodPut, "http://"+m+"/setReplicate"+"?key="+key+"&value="+value, nil)
+			req, err := http.NewRequest(http.MethodPut, "http://"+m+"/setReplicate"+"?key="+key+"&value="+value+"&term="+strconv.Itoa(term), nil)
 			if err != nil {
 				log.Printf("Failed to create request: %v", err)
 				w.WriteHeader(http.StatusInternalServerError)
@@ -145,6 +147,26 @@ func SetHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func replicateSetToFollowers(key, value string, term int) {
+	members := rft.GetMembers()
+	for _, m := range members {
+		if m == rft.GetLeader() {
+			continue
+		}
+		req, err := http.NewRequest(http.MethodPut, "http://"+m+"/setReplicate"+"?key="+key+"&value="+value+"&term="+strconv.Itoa(term), nil)
+		if err != nil {
+			log.Printf("Failed to create replication request to member %s: %v", m, err)
+			continue
+		}
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			log.Printf("Failed to replicate set to member %s: %v", m, err)
+			continue
+		}
+		resp.Body.Close()
+	}
+}
+
 func SetReplicateHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -156,11 +178,31 @@ func SetReplicateHandler(w http.ResponseWriter, r *http.Request) {
 
 	key := r.URL.Query().Get("key")
 	value := r.URL.Query().Get("value")
+	term := r.URL.Query().Get("term")
 
-	if key == "" || value == "" {
+	if key == "" || value == "" || term == "" {
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(`{"error": "Key and value are required"}`))
+		w.Write([]byte(`{"error": "Key, value, and term are required"}`))
 		return
+	}
+
+	termInt, err := strconv.Atoi(term)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(`{"error": "Invalid term"}`))
+		return
+	}
+
+	// Ngecek term dulu, kalau termnya lebih kecil dari term sekarang ya berarti ketinggalan jaman :V
+	currentTerm := rft.GetTerm()
+	if termInt < currentTerm {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(`{"error": "Outdated term"}`))
+		return
+	}
+
+	if termInt > currentTerm {
+		rft.SetTerm(termInt)
 	}
 
 	store.Set(key, value)
@@ -217,8 +259,9 @@ func DelHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if rft.GetRaftIsLeader() {
+		term := rft.GetTerm()
 		value := store.Del(key)
-		replicateDelToFollowers(key)
+		replicateDelToFollowers(key, term)
 		w.WriteHeader(http.StatusOK)
 		response := map[string]string{"response": value}
 		jsonResp, err := json.Marshal(response)
@@ -262,13 +305,13 @@ func DelHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func replicateDelToFollowers(key string) {
+func replicateDelToFollowers(key string, term int) {
 	members := rft.GetMembers()
 	for _, m := range members {
 		if m == rft.GetLeader() {
 			continue
 		}
-		req, err := http.NewRequest(http.MethodDelete, "http://"+m+"/delReplicate"+"?key="+key, nil)
+		req, err := http.NewRequest(http.MethodDelete, "http://"+m+"/delReplicate"+"?key="+key+"&term="+strconv.Itoa(term), nil)
 		if err != nil {
 			log.Printf("Failed to create replication request to member %s: %v", m, err)
 			continue
@@ -292,11 +335,31 @@ func DelReplicateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	key := r.URL.Query().Get("key")
+	term := r.URL.Query().Get("term")
 
-	if key == "" {
+	if key == "" || term == "" {
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(`{"error": "Key is required"}`))
+		w.Write([]byte(`{"error": "Key and term are required"}`))
 		return
+	}
+
+	termInt, err := strconv.Atoi(term)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(`{"error": "Invalid term"}`))
+		return
+	}
+
+	// Ngecek term dulu, kalau termnya lebih kecil dari term sekarang ya berarti ketinggalan jaman :V
+	currentTerm := rft.GetTerm()
+	if termInt < currentTerm {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(`{"error": "Outdated term"}`))
+		return
+	}
+
+	if termInt > currentTerm {
+		rft.SetTerm(termInt)
 	}
 
 	value := store.Del(key)
@@ -311,7 +374,6 @@ func DelReplicateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Write(jsonResp)
 }
-
 func AppendHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -331,8 +393,9 @@ func AppendHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if rft.GetRaftIsLeader() {
+		term := rft.GetTerm()
 		store.Append(key, value)
-		replicateAppendToFollowers(key, value)
+		replicateAppendToFollowers(key, value, term)
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"response": "success"}`))
 	} else {
@@ -366,13 +429,13 @@ func AppendHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func replicateAppendToFollowers(key, value string) {
+func replicateAppendToFollowers(key, value string, term int) {
 	members := rft.GetMembers()
 	for _, m := range members {
 		if m == rft.GetLeader() {
 			continue
 		}
-		req, err := http.NewRequest(http.MethodPut, "http://"+m+"/appendReplicate"+"?key="+key+"&value="+value, nil)
+		req, err := http.NewRequest(http.MethodPut, "http://"+m+"/appendReplicate"+"?key="+key+"&value="+value+"&term="+string(term), nil)
 		if err != nil {
 			log.Printf("Failed to create replication request to member %s: %v", m, err)
 			continue
@@ -397,11 +460,31 @@ func AppendReplicateHandler(w http.ResponseWriter, r *http.Request) {
 
 	key := r.URL.Query().Get("key")
 	value := r.URL.Query().Get("value")
+	term := r.URL.Query().Get("term")
 
-	if key == "" || value == "" {
+	if key == "" || value == "" || term == "" {
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(`{"error": "Key and value are required"}`))
+		w.Write([]byte(`{"error": "Key, value, and term are required"}`))
 		return
+	}
+
+	termInt, err := strconv.Atoi(term)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(`{"error": "Invalid term"}`))
+		return
+	}
+
+	// Ngecek term dulu, kalau termnya lebih kecil dari term sekarang ya berarti ketinggalan jaman :V
+	currentTerm := rft.GetTerm()
+	if termInt < currentTerm {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(`{"error": "Outdated term"}`))
+		return
+	}
+
+	if termInt > currentTerm {
+		rft.SetTerm(termInt)
 	}
 
 	store.Append(key, value)
