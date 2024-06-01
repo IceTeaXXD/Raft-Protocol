@@ -30,7 +30,7 @@ type Raft struct {
 }
 
 var raft = Raft{
-    members:  []string{"localhost:8080", "localhost:8081", "localhost:8082", "localhost:8083", "localhost:8084", "localhost:8085"},
+    members:  []string{"localhost:8081", "localhost:8082", "localhost:8083"},
     leader:   "",
     log:      []string{},
     role:     Follower,

@@ -1,73 +1,200 @@
 package handlers
 
 import (
-    "if3230-tubes2-spg/internal/store"
-    rft "if3230-tubes2-spg/internal/raft"
-    "fmt"
-    "net/http"
+	rft "if3230-tubes2-spg/internal/raft"
+	"if3230-tubes2-spg/internal/store"
+	"io"
+	"net/http"
 )
 
-func CheckLeader(w http.ResponseWriter) bool {
-    if rft.GetRaftIsLeader() {
-        return true
-    } 
-    var errorBody string = fmt.Sprintf("leader:%s", rft.GetLeader())
-    http.Error(w, errorBody, http.StatusServiceUnavailable)
-    return false
-}
-
 func PingHandler(w http.ResponseWriter, r *http.Request) {
-    if !CheckLeader(w) {
-        return
-    }
-    if r.Method == http.MethodGet {
-        fmt.Fprintf(w, "Pong")
-    }
+	w.Header().Set("Content-Type", "application/json")
+
+	if rft.GetRaftIsLeader() && r.Method == http.MethodGet {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"response": "Pong"}`))
+	} else if r.Method == http.MethodGet {
+		resp, err := http.Get("http://" + rft.GetLeader() + "/ping")
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		defer resp.Body.Close()
+
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+        w.Write(body)
+	} else {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Invalid method"))
+	}
 }
 
 func GetHandler(w http.ResponseWriter, r *http.Request) {
-    if !CheckLeader(w) {
-        return
-    }
-    key := r.URL.Query().Get("key")
-    value := store.Get(key)
-    fmt.Fprintf(w, "%s", value)
+	w.Header().Set("Content-Type", "application/json")
+
+	if rft.GetRaftIsLeader() && r.Method == http.MethodGet {
+		key := r.URL.Query().Get("key")
+		value := store.Get(key)
+		w.WriteHeader(http.StatusOK)
+        w.Write([]byte((`{"response": "` + value + `"}`)))
+	} else if r.Method == http.MethodGet {
+		resp, err := http.Get("http://" + rft.GetLeader() + "/get" + "?key=" + r.URL.Query().Get("key"))
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		defer resp.Body.Close()
+
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		w.WriteHeader(resp.StatusCode)
+		w.Write(body)
+	} else {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Invalid method"))
+	}
 }
 
 func SetHandler(w http.ResponseWriter, r *http.Request) {
-    if !CheckLeader(w) {
-        return
-    }
-    key := r.URL.Query().Get("key")
-    value := r.URL.Query().Get("value")
-    store.Set(key, value)
-    fmt.Fprintf(w, "OK")
+	w.Header().Set("Content-Type", "application/json")
+
+	if rft.GetRaftIsLeader() && r.Method == http.MethodPut {
+		key := r.URL.Query().Get("key")
+		value := r.URL.Query().Get("value")
+		store.Set(key, value)
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"response" : "success"}`))
+	} else if r.Method == http.MethodPut {
+		req, err := http.NewRequest(http.MethodPut, "http://"+rft.GetLeader()+"/set"+"?key="+r.URL.Query().Get("key")+"&value="+r.URL.Query().Get("value"), nil)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		defer resp.Body.Close()
+
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		w.WriteHeader(resp.StatusCode)
+		w.Write(body)
+	} else {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Invalid method"))
+	}
 }
 
 func StrlnHandler(w http.ResponseWriter, r *http.Request) {
-    if !CheckLeader(w) {
-        return
-    }
-    key := r.URL.Query().Get("key")
-    value := store.Get(key)
-    fmt.Fprintf(w, "%d", len(value))
+	w.Header().Set("Content-Type", "application/json")
+
+	if rft.GetRaftIsLeader() && r.Method == http.MethodGet {
+		key := r.URL.Query().Get("key")
+		value := store.Get(key)
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"response" : ` + value + `}`))
+	} else if r.Method == http.MethodGet {
+		resp, err := http.Get("http:/" + rft.GetLeader() + "/strlen" + "?key=" + r.URL.Query().Get("key"))
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		defer resp.Body.Close()
+
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		w.WriteHeader(resp.StatusCode)
+		w.Write(body)
+	} else {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Invalid method"))
+	}
 }
 
 func DelHandler(w http.ResponseWriter, r *http.Request) {
-    if !CheckLeader(w) {
-        return
-    }
-    key := r.URL.Query().Get("key")
-    value := store.Del(key)
-    fmt.Fprintf(w, "%s", value)
+	w.Header().Set("Content-Type", "application/json")
+
+	if rft.GetRaftIsLeader() && r.Method == http.MethodDelete {
+		key := r.URL.Query().Get("key")
+		value := store.Del(key)
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"response" : ` + value + `}`))
+	} else if r.Method == http.MethodDelete {
+		resp, err := http.Get("http:/" + rft.GetLeader() + "/del" + "?key=" + r.URL.Query().Get("key"))
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		defer resp.Body.Close()
+
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		w.WriteHeader(resp.StatusCode)
+		w.Write(body)
+	} else {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Invalid method"))
+	}
 }
 
 func AppendHandler(w http.ResponseWriter, r *http.Request) {
-    if !CheckLeader(w) {
-        return
-    }
-    key := r.URL.Query().Get("key")
-    value := r.URL.Query().Get("value")
-    store.Append(key, value)
-    fmt.Fprintf(w, "OK")
+	w.Header().Set("Content-Type", "application/json")
+
+	if rft.GetRaftIsLeader() && r.Method == http.MethodPut {
+		key := r.URL.Query().Get("key")
+		value := r.URL.Query().Get("value")
+		store.Append(key, value)
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"response" : "success"}`))
+	} else if r.Method == http.MethodPut {
+		resp, err := http.NewRequest(http.MethodPut, "http://"+rft.GetLeader()+"/append"+"?key="+r.URL.Query().Get("key")+"&value="+r.URL.Query().Get("value"), nil)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		defer resp.Body.Close()
+
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+        w.Write(body)
+	} else {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Invalid method"))
+	}
 }
