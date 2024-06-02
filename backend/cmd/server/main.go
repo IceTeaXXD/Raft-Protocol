@@ -77,6 +77,11 @@ func main() {
 	// Handle function
 	http.HandleFunc("/subscribe", raft.Berlangganan)
 
+	// Log Replication
+	http.HandleFunc("/setReplicate", handlers.SetReplicateHandler)
+	http.HandleFunc("/delReplicate", handlers.DelReplicateHandler)
+	http.HandleFunc("/appendReplicate", handlers.AppendReplicateHandler)
+
 	// Start Raft consensus
 	go raft.StartRaft(port)
 

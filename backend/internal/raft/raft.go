@@ -52,6 +52,14 @@ var raft = Raft{
     votedFor: "",
 }
 
+func GetTerm() int {
+	return raft.term
+}
+
+func SetTerm(term int) {
+	raft.term = term
+}
+
 func GetRaftIsLeader() bool {
     return raft.role == Leader
 }
@@ -95,6 +103,10 @@ func ResetElectionTimeout() {
 
 func GetSelf() string {
     return raft.self
+}
+
+func GetMembers() []string {
+    return raft.members
 }
 
 func SetMember(member []string) {
