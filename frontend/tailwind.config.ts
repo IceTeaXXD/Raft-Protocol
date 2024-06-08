@@ -58,6 +58,9 @@ const config = {
         sky: {
           DEFAULT: "#5addf4",
         },
+          terminal: {
+            DEFAULT: "#22202c",
+          },
       },
       borderRadius: {
         lg: "var(--radius)",
