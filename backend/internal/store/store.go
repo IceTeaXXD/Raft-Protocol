@@ -1,6 +1,10 @@
 package store
 
-import "sync"
+import (
+	"fmt"
+	"strconv"
+	"sync"
+)
 
 var store sync.Map
 
@@ -16,9 +20,12 @@ func Set(key, value string) {
     store.Store(key, value)
 }
 
-func Strln(key string) int {
+func Strln(key string) string {
     value := Get(key)
-    return len(value)
+    length := len(value)
+    fmt.Println(length)
+    fmt.Println(strconv.Itoa(length))
+    return strconv.Itoa(length)
 }
 
 func Del(key string) string {
