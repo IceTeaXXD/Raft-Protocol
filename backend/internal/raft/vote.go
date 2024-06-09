@@ -105,6 +105,7 @@ func HandleHeartbeat(w http.ResponseWriter, req *http.Request) {
     log.Printf("Node %s received heartbeat from %s", raft.self, heartbeat.Sender)
 
     raft.leader = heartbeat.Sender
+    raft.log = heartbeat.Log
 
     raft.mu.Lock()
     defer raft.mu.Unlock()

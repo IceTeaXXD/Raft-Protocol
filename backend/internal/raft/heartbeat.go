@@ -11,6 +11,7 @@ import (
 type Heartbeat struct {
     Term int
     Sender string
+    Log []string
 }
 
 type HeartbeatResponse struct {
@@ -38,6 +39,7 @@ func (r *Raft) sendHeartbeat(member string) {
     heartbeat := Heartbeat{
         Term: r.term,
         Sender: r.self,
+        Log: r.log,
     }
     data, err := json.Marshal(heartbeat)
     if err != nil {
