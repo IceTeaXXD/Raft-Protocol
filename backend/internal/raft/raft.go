@@ -2,7 +2,6 @@ package raft
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"math/rand"
@@ -119,7 +118,6 @@ func Berlangganan(w http.ResponseWriter, r *http.Request) {
             return
         }
         var requestURL = "http://" + raft.leader + "/subscribe"
-        fmt.Print(requestURL);
         resp, err := http.Post( requestURL, 
                                 "application/json",
                                 r.Body)
@@ -148,7 +146,9 @@ func Berlangganan(w http.ResponseWriter, r *http.Request) {
             return
         }
 
-        raft.members = append(raft.members, subscribeReq.IPAddress)
+        if(!contains(raft.members, subscribeReq.IPAddress)){
+            raft.members = append(raft.members, subscribeReq.IPAddress)
+        }
 
         var response = Response{
             Status: "success",
@@ -162,4 +162,13 @@ func Berlangganan(w http.ResponseWriter, r *http.Request) {
             return
         }
     }
+}
+
+func contains(arr []string, target string) bool {
+    for _, elem := range arr {
+        if elem == target {
+            return true
+        }
+    }
+    return false
 }
