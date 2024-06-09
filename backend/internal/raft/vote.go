@@ -1,10 +1,11 @@
 package raft
 
 import (
-    "bytes"
-    "encoding/json"
-    "log"
-    "net/http"
+	"bytes"
+	"encoding/json"
+	"if3230-tubes2-spg/internal/store"
+	"log"
+	"net/http"
 )
 
 type VoteRequest struct {
@@ -106,6 +107,23 @@ func HandleHeartbeat(w http.ResponseWriter, req *http.Request) {
 
     raft.leader = heartbeat.Sender
     raft.log = heartbeat.Log
+
+    store.Reset()
+    
+    for _, log := range raft.log {
+        switch log.command {
+		case "set":
+            store.Set(log.arg1, log.arg2)
+		case "append":
+            store.Append(log.arg1, log.arg2)
+		case "get":
+            store.Get(log.arg1)
+		case "strln":
+            store.Strln(log.arg1)
+		case "del":
+            store.Del(log.arg1)
+		}
+    }
 
     raft.mu.Lock()
     defer raft.mu.Unlock()

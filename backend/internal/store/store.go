@@ -41,3 +41,8 @@ func Append(key, value string) {
     newValue := existingValue + value
     Set(key, newValue)
 }
+
+// RESET ALL VALUE TO NULL
+func Reset() {
+    store = sync.Map{}
+}

@@ -18,12 +18,18 @@ const (
 	Leader
 )
 
+type Log struct {
+	command string
+	arg1    string
+	arg2    string
+}
+
 type Raft struct {
 	members         []string
 	follower        []string
 	leader          string
 	self            string
-	log             []string
+	log             []Log
 	mu              sync.Mutex
 	role            NodeRole
 	term            int
@@ -45,17 +51,22 @@ type Response struct {
 var raft = Raft{
 	members:  []string{},
 	leader:   "",
-	log:      []string{},
+	log:      []Log{},
 	role:     Follower,
 	term:     0,
 	votedFor: "",
 }
 
-func AddLog(prompt string) {
-	raft.log = append(raft.log, prompt)
+func AddLog(cmd string, arg1 string, arg2 string) {
+	log := Log{
+		command: cmd,
+		arg1:    arg1,
+		arg2:    arg2,
+	}
+	raft.log = append(raft.log, log)
 }
 
-func GetLog() []string {
+func GetLog() []Log {
 	return raft.log
 }
 
