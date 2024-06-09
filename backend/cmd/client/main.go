@@ -11,10 +11,10 @@ import (
 
 func main() {
 	// Parse the port from the command line arguments
-	var port string
 	var host string
-	flag.StringVar(&port, "port", "8080", "Port to run the client on")
-	flag.StringVar(&host, "host", "localhost", "Host Server")
+	var port string
+	flag.StringVar(&host, "host", "localhost", "Host of the server")
+	flag.StringVar(&port, "port", "8080", "Port of the server")
 	flag.Parse()
 
 	// Create a new client instance with the specified port
@@ -76,6 +76,21 @@ func main() {
 			res, err = c.Ping()
 		case "log":
 			res, err = c.RequestLog()
+		case "begin":
+			c.Begin()
+			fmt.Println("Transaction started.")
+			continue
+		case "commit":
+			results, err := c.Commit()
+			if err != nil {
+				fmt.Println("Error:", err)
+			} else {
+				fmt.Println("Transaction results:")
+				for _, r := range results {
+					fmt.Println(r)
+				}
+			}
+			continue
 		case "exit":
 			fmt.Println("Exiting client.")
 			return
