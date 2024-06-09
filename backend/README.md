@@ -30,3 +30,9 @@ go run ./cmd/server/main.go -leaderHost=localhost -leaderPort=8080 -host=localho
 ```
 go run cmd/client/main.go -host=localhost -port=8080
 ```
+
+4. Unit Test (BONUS)
+```
+cd internal/store
+go test -v
+```
