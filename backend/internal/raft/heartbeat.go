@@ -1,11 +1,11 @@
 package raft
 
 import (
-    "bytes"
-    "encoding/json"
-    "log"
-    "net/http"
-    "time"
+	"bytes"
+	"encoding/json"
+	"log"
+	"net/http"
+	"time"
 )
 
 type Heartbeat struct {
@@ -48,6 +48,14 @@ func (r *Raft) sendHeartbeat(member string) {
     resp, err := http.Post("http://"+member+"/heartbeat", "application/json", bytes.NewBuffer(data))
     if err != nil || resp.StatusCode != http.StatusOK {
         log.Printf("Failed to send heartbeat to %s: %v", member, err)
-        return
+
+        r.mu.Lock()
+        for i, m := range r.members {
+            if m == member {
+                r.members = append(r.members[:i], r.members[i+1:]...)
+                break
+            }
+        }
+        r.mu.Unlock()
     }
 }
