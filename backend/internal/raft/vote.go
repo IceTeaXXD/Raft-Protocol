@@ -111,17 +111,17 @@ func HandleHeartbeat(w http.ResponseWriter, req *http.Request) {
     store.Reset()
     
     for _, log := range raft.log {
-        switch log.command {
+        switch log.Command {
 		case "set":
-            store.Set(log.arg1, log.arg2)
+            store.Set(log.Arg1, log.Arg2)
 		case "append":
-            store.Append(log.arg1, log.arg2)
+            store.Append(log.Arg1, log.Arg2)
 		case "get":
-            store.Get(log.arg1)
+            store.Get(log.Arg1)
 		case "strln":
-            store.Strln(log.arg1)
+            store.Strln(log.Arg1)
 		case "del":
-            store.Del(log.arg1)
+            store.Del(log.Arg1)
 		}
     }
 

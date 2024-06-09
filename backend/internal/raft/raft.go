@@ -19,9 +19,9 @@ const (
 )
 
 type Log struct {
-	command string
-	arg1    string
-	arg2    string
+	Command string `json:"command"`
+	Arg1    string `json:"arg1"`
+	Arg2    string `json:"arg2"`
 }
 
 type Raft struct {
@@ -59,9 +59,9 @@ var raft = Raft{
 
 func AddLog(cmd string, arg1 string, arg2 string) {
 	log := Log{
-		command: cmd,
-		arg1:    arg1,
-		arg2:    arg2,
+		Command: cmd,
+		Arg1:    arg1,
+		Arg2:    arg2,
 	}
 	raft.log = append(raft.log, log)
 }

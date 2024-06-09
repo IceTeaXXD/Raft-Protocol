@@ -9,9 +9,9 @@ import (
 )
 
 type Heartbeat struct {
-    Term int
-    Sender string
-    Log []Log
+    Term int `json:"term"`
+    Sender string `json:"sender"`
+    Log []Log `json:"log"`
 }
 
 type HeartbeatResponse struct {
@@ -41,7 +41,6 @@ func (r *Raft) sendHeartbeat(member string) {
         Sender: r.self,
         Log: r.log,
     }
-    // Marshalling failss here with r.log
     data, err := json.Marshal(heartbeat)
     if err != nil {
         log.Printf("Failed to marshal heartbeat: %v", err)
