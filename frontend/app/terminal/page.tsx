@@ -81,8 +81,14 @@ function TerminalPage() {
         if (output === "") {
           output = `""`;
         }
+      } else if (command === "log") {
+        const response = await axios.get(`http://${host}:${port}/requestLog`);
+        output = response.data.response;
+        if (output === "") {
+          output = `""`;
+        }
       } else if (command === "help") {
-        output = `Usage:\n 1. ping\n 2. set <key> <value>\n 3. append <key> <value>\n 4. get <key>\n 5. strln <key>\n 6. del <key>`;
+        output = `Usage:\n 1. ping\n 2. set <key> <value>\n 3. append <key> <value>\n 4. get <key>\n 5. strln <key>\n 6. del <key>\n 7. log`;
       } else {
         output = 'Invalid command, type "help" for usage';
       }
