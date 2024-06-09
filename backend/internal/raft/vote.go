@@ -55,19 +55,6 @@ func HandleVoteRequest(w http.ResponseWriter, req *http.Request) {
     raft.mu.Lock()
     defer raft.mu.Unlock()
 
-    // Bruhhh, kalo leader ngapain vote
-    // if raft.role == Leader {
-    //     log.Printf("Node %s is leader and did not vote for %s", raft.self, voteRequest.CandidateID)
-    //     voteResponse := VoteResponse{
-    //         Term:        raft.term,
-    //         VoteGranted: false,
-    //     }
-    //     if err := json.NewEncoder(w).Encode(voteResponse); err != nil {
-    //         http.Error(w, err.Error(), http.StatusInternalServerError)
-    //     }
-    //     return
-    // }
-
     // Dapet vote request dari candidate, jadi reset election timeout
     raft.resetElectionTimeout()
 

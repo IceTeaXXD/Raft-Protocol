@@ -510,9 +510,8 @@ func RequestLog(w http.ResponseWriter, r *http.Request) {
 
 	if rft.GetRaftIsLeader() {
 		w.WriteHeader(http.StatusOK)
-		// w.Write([]byte(`{"response": "` + strings.Join(rft.GetLog(), " | ") + `"}`))
+		w.Write([]byte(`{"response": ` + fmt.Sprint(rft.GetLog()) + `}`))
 	} else {
-		// Forward request to leader
 		url := "http://" + rft.GetLeader() + "/requestLog"
 		req, err := http.NewRequest(http.MethodGet, url, nil)
 		if err != nil {

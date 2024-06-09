@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
+	"log"
 	"net/http"
 	"strconv"
 )
@@ -51,8 +53,6 @@ func (c *Client) makeRequest(method, endpoint string, body io.Reader) (string, e
 	if err := json.Unmarshal(jsonResponse.Response, &responseStr); err == nil {
 		return responseStr, nil
 	}
-
-	fmt.Println(responseStr)
 
 	var responseNumber int64
 	if err := json.Unmarshal(jsonResponse.Response, &responseNumber); err == nil {
@@ -115,9 +115,21 @@ func (c *Client) Append(key, value string) (string, error) {
 	return c.makeRequest(http.MethodPut, url, nil)
 }
 
-func (c* Client) RequestLog() (string, error) {
-	return c.makeRequest(http.MethodGet, "/requestLog", nil)
+func (c *Client) RequestLog() (string, error) {
+	resp, err := http.Get("http://" + c.Host + ":" + c.Port + "/requestLog")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	return string(body), nil
 }
+
 func (c *Client) Begin() {
 	c.InTransaction = true
 }
