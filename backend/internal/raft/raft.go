@@ -89,7 +89,7 @@ func (r *Raft) resetElectionTimeout() {
 	if r.electionTimeout != nil {
 		r.electionTimeout.Stop()
 	}
-	r.electionTimeout = time.AfterFunc(time.Duration(5+rand.Intn(5))*time.Second, func() {
+	r.electionTimeout = time.AfterFunc(time.Duration(500+rand.Intn(500))*time.Millisecond, func() {
 		r.mu.Lock()
 		if r.role != Leader {
 			r.role = Candidate

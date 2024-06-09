@@ -54,18 +54,18 @@ func HandleVoteRequest(w http.ResponseWriter, req *http.Request) {
     raft.mu.Lock()
     defer raft.mu.Unlock()
 
-    // Bruhhh, kalo leader ngapain vote
-    // if raft.role == Leader {
-    //     log.Printf("Node %s is leader and did not vote for %s", raft.self, voteRequest.CandidateID)
-    //     voteResponse := VoteResponse{
-    //         Term:        raft.term,
-    //         VoteGranted: false,
-    //     }
-    //     if err := json.NewEncoder(w).Encode(voteResponse); err != nil {
-    //         http.Error(w, err.Error(), http.StatusInternalServerError)
-    //     }
-    //     return
-    // }
+    // Bruhhh, kalo Candidate ngapain vote
+    if raft.role == Candidate {
+        log.Printf("Node %s is candidate and did not vote for %s", raft.self, voteRequest.CandidateID)
+        voteResponse := VoteResponse{
+            Term:        raft.term,
+            VoteGranted: false,
+        }
+        if err := json.NewEncoder(w).Encode(voteResponse); err != nil {
+            http.Error(w, err.Error(), http.StatusInternalServerError)
+        }
+        return
+    }
 
     // Dapet vote request dari candidate, jadi reset election timeout
     raft.resetElectionTimeout()
@@ -78,6 +78,14 @@ func HandleVoteRequest(w http.ResponseWriter, req *http.Request) {
         raft.term = voteRequest.Term
         raft.votedFor = ""
         raft.role = Follower
+    } else {
+        voteResponse.VoteGranted = false
+        log.Printf("Node %s did not vote for %s", raft.self, voteRequest.CandidateID)
+        if err := json.NewEncoder(w).Encode(voteResponse); err != nil {
+            http.Error(w, err.Error(), http.StatusInternalServerError)
+            return
+        }
+        return
     }
 
     if raft.votedFor == "" || raft.votedFor == voteRequest.CandidateID {
@@ -106,6 +114,7 @@ func HandleHeartbeat(w http.ResponseWriter, req *http.Request) {
 
     raft.leader = heartbeat.Sender
     raft.log = heartbeat.Log
+    raft.members = heartbeat.Members
 
     raft.mu.Lock()
     defer raft.mu.Unlock()

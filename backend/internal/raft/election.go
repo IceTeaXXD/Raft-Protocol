@@ -33,7 +33,8 @@ func (r *Raft) startElection() {
     if r.votes > len(r.members)/2 {
         r.role = Leader
         r.leader = r.self
-        log.Println("Became leader")
+        log.Printf("Node (SELF) %s became Leader in term %d\n", r.self, r.term)
+        log.Printf("Members: %v\n", r.members)
     } else {
         r.role = Follower
         log.Println("Election failed, staying as candidate")
