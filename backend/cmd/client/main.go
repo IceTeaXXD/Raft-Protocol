@@ -74,6 +74,8 @@ func main() {
 			res, err = c.Del(args[0])
 		case "ping":
 			res, err = c.Ping()
+		case "log":
+			res, err = c.RequestLog()
 		case "exit":
 			fmt.Println("Exiting client.")
 			return

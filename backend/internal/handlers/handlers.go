@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 func PingHandler(w http.ResponseWriter, r *http.Request) {
@@ -34,7 +35,7 @@ func PingHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		w.WriteHeader(http.StatusOK)
-        w.Write(body)
+		w.Write(body)
 	} else {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte("Invalid method"))
@@ -48,7 +49,7 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 		key := r.URL.Query().Get("key")
 		value := store.Get(key)
 		w.WriteHeader(http.StatusOK)
-        w.Write([]byte((`{"response": "` + value + `"}`)))
+		w.Write([]byte((`{"response": "` + value + `"}`)))
 		rft.AddLog("GET " + key)
 	} else if r.Method == http.MethodGet {
 		resp, err := http.Get("http://" + rft.GetLeader() + "/get" + "?key=" + r.URL.Query().Get("key"))
@@ -507,9 +508,37 @@ func RequestLog(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if rft.GetRaftIsLeader(){
+	if rft.GetRaftIsLeader() {
 		w.WriteHeader(http.StatusOK)
-		// WRITE THE LOG
-		w.Write([]byte(`{"response": "success"}`))
+		w.Write([]byte(`{"response": "` + strings.Join(rft.GetLog(), " | ") + `"}`))
+	} else {
+		// Forward request to leader
+		url := "http://" + rft.GetLeader() + "/requestLog"
+		req, err := http.NewRequest(http.MethodGet, url, nil)
+		if err != nil {
+			log.Printf("Failed to create request: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(`{"error": "Internal server error"}`))
+			return
+		}
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		if err != nil {
+			log.Printf("Failed to execute request: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(`{"error": "Internal server error"}`))
+			return
+		}
+		defer resp.Body.Close()
+
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			log.Printf("Failed to read response body: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(`{"error": "Internal server error"}`))
+			return
+		}
+		w.WriteHeader(resp.StatusCode)
+		w.Write(body)
 	}
 }
