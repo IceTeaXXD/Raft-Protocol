@@ -93,6 +93,9 @@ func main() {
 	// Handle function
 	http.HandleFunc("/subscribe", raft.Berlangganan)
 
+	// Request Log Endpoint
+	http.HandleFunc("/requestLog", handlers.RequestLog)
+
 	// Log Replication
 	http.HandleFunc("/setReplicate", handlers.SetReplicateHandler)
 	http.HandleFunc("/delReplicate", handlers.DelReplicateHandler)
