@@ -33,12 +33,6 @@ Kelompok SPG
 1. [Backend README](backend/README.md)
 2. [Frontend README](frontend/README.md)
 
-
-Alternatively, you can run the main program to switch between server and client mode
-```bash
-python main.py
-```
-
 ## Folder Structure
 ```bash
 📦backend
