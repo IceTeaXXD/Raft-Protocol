@@ -74,6 +74,8 @@ func main() {
 			res, err = c.Del(args[0])
 		case "ping":
 			res, err = c.Ping()
+		case "log":
+			res, err = c.RequestLog()
 		case "begin":
 			c.Begin()
 			fmt.Println("Transaction started.")

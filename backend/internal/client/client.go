@@ -52,6 +52,8 @@ func (c *Client) makeRequest(method, endpoint string, body io.Reader) (string, e
 		return responseStr, nil
 	}
 
+	fmt.Println(responseStr)
+
 	var responseNumber int64
 	if err := json.Unmarshal(jsonResponse.Response, &responseNumber); err == nil {
 		return strconv.FormatInt(responseNumber, 10), nil
@@ -113,6 +115,9 @@ func (c *Client) Append(key, value string) (string, error) {
 	return c.makeRequest(http.MethodPut, url, nil)
 }
 
+func (c* Client) RequestLog() (string, error) {
+	return c.makeRequest(http.MethodGet, "/requestLog", nil)
+}
 func (c *Client) Begin() {
 	c.InTransaction = true
 }
