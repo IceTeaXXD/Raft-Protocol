@@ -29,22 +29,24 @@ func enableCORS(next http.Handler) http.Handler {
 
 func main() {
 	var port string
-	var lead string
-	var portLead string
+	var host string
+	var leaderHost string
+	var leaderPort string
 
 	flag.StringVar(&port, "port", "8080", "Port to run the server on")
-	flag.StringVar(&lead, "lead", "", "Port to be the leader of this server")
-	flag.StringVar(&portLead, "portLead", "8080", "Lead port")
+	flag.StringVar(&host, "host", "localhost", "Server Host")
+	flag.StringVar(&leaderHost, "leaderHost", "", "Host of the server leader")
+	flag.StringVar(&leaderPort, "leaderPort", "8080", "Port of the server leader")
 	flag.Parse()
 
-	if (lead != ""){
+	if (leaderHost != ""){
 		var subscribeReq = raft.SubscribeReq{
-			IPAddress: lead + ":" + port,
+			IPAddress: host + ":" + port,
 		}
 
 		payload, _ := json.Marshal(subscribeReq)
 
-		var url = "http://" + lead  + ":" + portLead + "/subscribe"
+		var url = "http://" + leaderHost  + ":" + leaderPort + "/subscribe"
 		req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(payload))
 		if err != nil {
 			fmt.Println("Error creating new request:", err)
@@ -96,7 +98,8 @@ func main() {
 	http.HandleFunc("/delReplicate", handlers.DelReplicateHandler)
 	http.HandleFunc("/appendReplicate", handlers.AppendReplicateHandler)
 	// Start Raft consensus
-	go raft.StartRaft(port)
+	go raft.StartRaft(host, port)
+
 	log.Println("Starting server on port", port)
 	log.Fatal(http.ListenAndServe(":"+port, enableCORS(http.DefaultServeMux)))
 }

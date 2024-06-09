@@ -72,8 +72,8 @@ func (r *Raft) isLeader() bool {
     return r.role == Leader
 }
 
-func StartRaft(port string) {
-    raft.self = "localhost:" + port
+func StartRaft(host string, port string) {
+    raft.self = host + ":" + port
     raft.resetElectionTimeout()
     go raft.Heartbeat()
 }

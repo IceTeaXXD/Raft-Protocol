@@ -9,6 +9,7 @@ import (
 )
 
 type Client struct {
+	Host string
 	Port string
 }
 
@@ -17,7 +18,7 @@ type JsonResponse struct {
 }
 
 func (c *Client) makeRequest(method, endpoint string, body io.Reader) (string, error) {
-	url := "http://localhost:" + c.Port + endpoint
+	url := "http://"+ c.Host + ":" + c.Port + endpoint
 	request, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return "", err

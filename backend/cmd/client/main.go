@@ -12,11 +12,13 @@ import (
 func main() {
 	// Parse the port from the command line arguments
 	var port string
+	var host string
 	flag.StringVar(&port, "port", "8080", "Port to run the client on")
+	flag.StringVar(&host, "host", "localhost", "Host Server")
 	flag.Parse()
 
 	// Create a new client instance with the specified port
-	c := &client.Client{Port: port}
+	c := &client.Client{Host: host, Port: port}
 
 	// Create a scanner to read user input
 	scanner := bufio.NewScanner(os.Stdin)
