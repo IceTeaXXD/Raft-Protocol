@@ -2,7 +2,7 @@ import React from 'react'
 
 function Navbar() {
   return (
-    <nav className="bg-black p-4">
+    <nav className="bg-terminal p-4">
     <ul className="flex space-x-4">
       <li>
         <a href="/" className="text-sky font-terminal font-bold hover:text-gray-400">SPG</a>
