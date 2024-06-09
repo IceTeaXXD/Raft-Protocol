@@ -12,6 +12,7 @@ type Heartbeat struct {
     Term int `json:"term"`
     Sender string `json:"sender"`
     Log []Log `json:"log"`
+    Members []string `json:members`
 }
 
 type HeartbeatResponse struct {
@@ -21,7 +22,7 @@ type HeartbeatResponse struct {
 
 func (r *Raft) Heartbeat() {
     for {
-        time.Sleep(2 * time.Second)
+        time.Sleep(50 * time.Millisecond)
         r.mu.Lock()
         if r.role == Leader {
             for _, member := range r.members {
@@ -40,6 +41,7 @@ func (r *Raft) sendHeartbeat(member string) {
         Term: r.term,
         Sender: r.self,
         Log: r.log,
+        Members: r.members,
     }
     data, err := json.Marshal(heartbeat)
     if err != nil {
@@ -51,13 +53,13 @@ func (r *Raft) sendHeartbeat(member string) {
     if err != nil || resp.StatusCode != http.StatusOK {
         log.Printf("Failed to send heartbeat to %s: %v", member, err)
 
-        r.mu.Lock()
-        for i, m := range r.members {
-            if m == member {
-                r.members = append(r.members[:i], r.members[i+1:]...)
-                break
-            }
-        }
-        r.mu.Unlock()
+        // r.mu.Lock()
+        // for i, m := range r.members {
+        //     if m == member {
+        //         r.members = append(r.members[:i], r.members[i+1:]...)
+        //         break
+        //     }
+        // }
+        // r.mu.Unlock()
     }
 }
