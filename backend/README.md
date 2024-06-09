@@ -6,9 +6,11 @@
 ```
 go run cmd/server/main.go
 ```
-Arguemnts:
+Arguments:
 - `-port` (default: 8080) : Port number for the server
 - `-host` (default: localhost) : Host for the server
+- `-leaderHost` (default: "") : Host of the server leader
+- `-leaderPort` (default: 8080) : Port of the server leader
 
 
 ## Running Examples
