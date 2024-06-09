@@ -9,10 +9,10 @@ import (
 )
 
 type Heartbeat struct {
-    Term int
-    Sender string
-    Log []string
-    Members []string
+    Term int `json:"term"`
+    Sender string `json:"sender"`
+    Log []Log `json:"log"`
+    Members []string `json:members`
 }
 
 type HeartbeatResponse struct {

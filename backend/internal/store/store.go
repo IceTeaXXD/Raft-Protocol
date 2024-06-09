@@ -1,7 +1,6 @@
 package store
 
 import (
-	"fmt"
 	"strconv"
 	"sync"
 )
@@ -23,8 +22,6 @@ func Set(key, value string) {
 func Strln(key string) string {
     value := Get(key)
     length := len(value)
-    fmt.Println(length)
-    fmt.Println(strconv.Itoa(length))
     return strconv.Itoa(length)
 }
 
@@ -40,4 +37,9 @@ func Append(key, value string) {
     existingValue := Get(key)
     newValue := existingValue + value
     Set(key, newValue)
+}
+
+// RESET ALL VALUE TO NULL
+func Reset() {
+    store = sync.Map{}
 }

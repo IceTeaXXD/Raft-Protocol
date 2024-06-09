@@ -1,10 +1,11 @@
 package raft
 
 import (
-    "bytes"
-    "encoding/json"
-    "log"
-    "net/http"
+	"bytes"
+	"encoding/json"
+	"if3230-tubes2-spg/internal/store"
+	"log"
+	"net/http"
 )
 
 type VoteRequest struct {
@@ -54,7 +55,6 @@ func HandleVoteRequest(w http.ResponseWriter, req *http.Request) {
     raft.mu.Lock()
     defer raft.mu.Unlock()
 
-    // Bruhhh, kalo Candidate ngapain vote
     if raft.role == Candidate {
         log.Printf("Node %s is candidate and did not vote for %s", raft.self, voteRequest.CandidateID)
         voteResponse := VoteResponse{
@@ -67,7 +67,6 @@ func HandleVoteRequest(w http.ResponseWriter, req *http.Request) {
         return
     }
 
-    // Dapet vote request dari candidate, jadi reset election timeout
     raft.resetElectionTimeout()
 
     voteResponse := VoteResponse{
@@ -116,10 +115,26 @@ func HandleHeartbeat(w http.ResponseWriter, req *http.Request) {
     raft.log = heartbeat.Log
     raft.members = heartbeat.Members
 
+    store.Reset()
+    
+    for _, log := range raft.log {
+        switch log.Command {
+		case "set":
+            store.Set(log.Arg1, log.Arg2)
+		case "append":
+            store.Append(log.Arg1, log.Arg2)
+		case "get":
+            store.Get(log.Arg1)
+		case "strln":
+            store.Strln(log.Arg1)
+		case "del":
+            store.Del(log.Arg1)
+		}
+    }
+
     raft.mu.Lock()
     defer raft.mu.Unlock()
 
-    // Dapet heartbeat dari leader, jadi reset election timeout
     if raft.role != Leader {
         raft.resetElectionTimeout()
     }

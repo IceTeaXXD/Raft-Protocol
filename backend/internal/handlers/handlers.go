@@ -9,7 +9,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"strings"
+	// "strings"
 )
 
 func PingHandler(w http.ResponseWriter, r *http.Request) {
@@ -18,7 +18,7 @@ func PingHandler(w http.ResponseWriter, r *http.Request) {
 	if rft.GetRaftIsLeader() && r.Method == http.MethodGet {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"response": "Pong"}`))
-		rft.AddLog("PING")
+		rft.AddLog("ping", "", "")
 	} else if r.Method == http.MethodGet {
 		resp, err := http.Get("http://" + rft.GetLeader() + "/ping")
 		if err != nil {
@@ -50,7 +50,7 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 		value := store.Get(key)
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte((`{"response": "` + value + `"}`)))
-		rft.AddLog("GET " + key)
+		rft.AddLog("get", key, "")
 	} else if r.Method == http.MethodGet {
 		resp, err := http.Get("http://" + rft.GetLeader() + "/get" + "?key=" + r.URL.Query().Get("key"))
 		if err != nil {
@@ -120,7 +120,7 @@ func SetHandler(w http.ResponseWriter, r *http.Request) {
 		store.Set(key, value)
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"response": "success"}`))
-		rft.AddLog("SET " + key + ":" + value)
+		rft.AddLog("set", key, value)
 	} else {
 		leader := rft.GetLeader()
 		req, err := http.NewRequest(http.MethodPut, "http://"+leader+"/set"+"?key="+key+"&value="+value, nil)
@@ -222,7 +222,7 @@ func StrlnHandler(w http.ResponseWriter, r *http.Request) {
 		value := store.Get(key)
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"response": ` + fmt.Sprint(len(value)) + `}`))
-		rft.AddLog("STRLEN " + key)
+		rft.AddLog("strln", key, "")
 	} else if r.Method == http.MethodGet {
 		resp, err := http.Get("http://" + rft.GetLeader() + "/strln" + "?key=" + r.URL.Query().Get("key"))
 		if err != nil {
@@ -277,7 +277,7 @@ func DelHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		w.Write(jsonResp)
-		rft.AddLog("DEL " + key)
+		rft.AddLog("del", key, "")
 	} else {
 		url := "http://" + rft.GetLeader() + "/del?key=" + key
 
@@ -404,7 +404,7 @@ func AppendHandler(w http.ResponseWriter, r *http.Request) {
 		replicateAppendToFollowers(key, value, term)
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"response": "success"}`))
-		rft.AddLog("APPEND " + key + ":" + value)
+		rft.AddLog("append", key, value)
 	} else {
 		url := "http://" + rft.GetLeader() + "/append?key=" + key + "&value=" + value
 		req, err := http.NewRequest(http.MethodPut, url, nil)
@@ -510,9 +510,8 @@ func RequestLog(w http.ResponseWriter, r *http.Request) {
 
 	if rft.GetRaftIsLeader() {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"response": "` + strings.Join(rft.GetLog(), " | ") + `"}`))
+		w.Write([]byte(`{"response": ` + fmt.Sprint(rft.GetLog()) + `}`))
 	} else {
-		// Forward request to leader
 		url := "http://" + rft.GetLeader() + "/requestLog"
 		req, err := http.NewRequest(http.MethodGet, url, nil)
 		if err != nil {
