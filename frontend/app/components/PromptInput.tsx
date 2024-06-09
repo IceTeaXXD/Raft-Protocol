@@ -39,7 +39,7 @@ const PromptInput = ({ prompt, handleInput, index, processInput, inputRefs }: { 
               inputRefs.current[index] = el!;
             }
           }}
-          className="border-0 outline-0 text-sky w-full mr-2 bg-black"
+          className="border-0 outline-0 text-sky w-full mr-2 bg-terminal"
           type="text"
           value={prompt}
           readOnly={readOnly}

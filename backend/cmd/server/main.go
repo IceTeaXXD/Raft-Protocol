@@ -12,8 +12,22 @@ import (
 	"net/http"
 )
 
+func enableCORS(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
 func main() {
-	// Parse flags
 	var port string
 	var lead string
 	var portLead string
@@ -27,15 +41,15 @@ func main() {
 		var subscribeReq = raft.SubscribeReq{
 			IPAddress: lead + ":" + port,
 		}
-		
+
 		payload, _ := json.Marshal(subscribeReq)
-		
+
 		var url = "http://" + lead  + ":" + portLead + "/subscribe"
 		req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(payload))
 		if err != nil {
-            fmt.Println("Error creating new request:", err)
-            return
-        }
+			fmt.Println("Error creating new request:", err)
+			return
+		}
 		req.Header.Set("Content-Type", "application/json")
 
 		resp, err := http.DefaultClient.Do(req)
@@ -54,7 +68,7 @@ func main() {
 		err = json.Unmarshal(body, &responseJSON)
 		if err != nil {
 			fmt.Println("Error parsing JSON:", err)
-        	return
+			return
 		}
 
 		raftMember := responseJSON.RaftMember
@@ -81,10 +95,8 @@ func main() {
 	http.HandleFunc("/setReplicate", handlers.SetReplicateHandler)
 	http.HandleFunc("/delReplicate", handlers.DelReplicateHandler)
 	http.HandleFunc("/appendReplicate", handlers.AppendReplicateHandler)
-
 	// Start Raft consensus
 	go raft.StartRaft(port)
-
 	log.Println("Starting server on port", port)
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	log.Fatal(http.ListenAndServe(":"+port, enableCORS(http.DefaultServeMux)))
 }

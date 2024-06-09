@@ -4,10 +4,16 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"encoding/json"
+	"strconv"
 )
 
 type Client struct {
 	Port string
+}
+
+type JsonResponse struct {
+	Response json.RawMessage `json:"response"`
 }
 
 func (c *Client) makeRequest(method, endpoint string, body io.Reader) (string, error) {
@@ -23,13 +29,27 @@ func (c *Client) makeRequest(method, endpoint string, body io.Reader) (string, e
 		return "", err
 	}
 	defer response.Body.Close()
-
 	bodyBytes, err := io.ReadAll(response.Body)
 	if err != nil {
 		return "", err
 	}
+	var jsonResponse JsonResponse
+	err = json.Unmarshal(bodyBytes, &jsonResponse)
+	if err != nil {
+		return "", err
+	}
 
-	return string(bodyBytes), nil
+	var responseStr string
+	if err := json.Unmarshal(jsonResponse.Response, &responseStr); err == nil {
+		return responseStr, nil
+	}
+
+	var responseNumber int64
+	if err := json.Unmarshal(jsonResponse.Response, &responseNumber); err == nil {
+		return strconv.FormatInt(responseNumber, 10), nil
+	}
+
+	return "", err
 }
 
 func (c *Client) Ping() (string, error) {

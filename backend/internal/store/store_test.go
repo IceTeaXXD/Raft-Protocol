@@ -40,17 +40,17 @@ func TestStrln(t *testing.T) {
 	t.Run("Length of Existing Key", func(t *testing.T) {
 		Set("key2", "value2")
 		got := Strln("key2")
-		want := 6
+		want := "6"
 		if got != want {
-			t.Errorf("Strln(key2) = %d; want %d", got, want)
+			t.Errorf("Strln(key2) = %s; want %s", got, want)
 		}
 	})
 
 	t.Run("Length of Non-Existent Key", func(t *testing.T) {
 		got := Strln("nonexistent")
-		want := 0
+		want := "0"
 		if got != want {
-			t.Errorf("Strln(nonexistent) = %d; want %d", got, want)
+			t.Errorf("Strln(nonexistent) = %s; want %s", got, want)
 		}
 	})
 }
@@ -115,7 +115,7 @@ func TestConcurrentAccess(t *testing.T) {
 		}
 
 		wg.Wait()
-		if Strln(key) == 0 {
+		if Strln(key) == "0" {
 			t.Errorf("Strln(concurrentKey) should not be 0 after concurrent Set operations")
 		}
 	})
@@ -131,7 +131,7 @@ func TestConcurrentAccess(t *testing.T) {
 		}
 
 		wg.Wait()
-		if Strln(key) == 0 {
+		if Strln(key) == "0" {
 			t.Errorf("Strln(concurrentKey) should not be 0 after concurrent Append operations")
 		}
 	})
